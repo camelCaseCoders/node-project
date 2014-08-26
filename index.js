@@ -1,44 +1,26 @@
 var express = require('express'),
 	app = express(),
-	highscores = require('./highscores.js');
+	bodyParser = require('body-parser'),
+	cookieParser = require('cookie-parser'),
 
-var server = app.listen(8080);
+	database = require('./database.js'),
 
-console.log('Server on port 8080.')
+	account = require('./account/'),
+	highscores = require('./highscores/');
 
+var server = app.listen(8080, function() {
+	console.log('Server up on port 8080.')
+});
+
+database.connect();
+
+app.use(database.ensureConnected())
 app.use(express.static(__dirname + '/static'));
-app.use('/scores/*', highscores.assureConnected());
-app.use(require('body-parser').json());
-
-app.get('/scores/all', function(req, res, next) {
-	highscores.getAll(function(err, scores) {
-		if(err) next(err);
-
-		res.json(scores);
-	});
-});
-
-app.get('/scores/high', function(req, res, next) {
-	highscores.getTop(10, function(err, scores) {
-		if(err) next(err);
-
-		res.json(scores);
-	});
-});
-
-app.post('/scores/add', function(req, res, next) {
-	console.log(req.body);
-	highscores.add(req.body, function(err, score) {
-		if(err) next(err);
-
-		res.json(score);
-	});
-});
-
-app.post('/scores/remove', function(req, res, next) {
-	highscores.remove(req.body, function(err, score) {
-		if(err) next(err);
-		
-		res.json(score);
-	});
+app.use(bodyParser.json());
+app.use(cookieParser());
+app.use(account.authenticate())
+app.use('/account', account.router())
+app.use('/scores', highscores.router());
+app.get('/*', function(req, res, next) {
+	 res.sendfile(__dirname + '/static/index.html');
 });
