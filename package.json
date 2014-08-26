@@ -1,0 +1,26 @@
+{
+  "name": "test",
+  "version": "0.0.1",
+  "description": "Worksample for Viaplay",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "JohnnePonne och SimmePr0n",
+  "dependencies": {
+    "simple-ioc": "2.5.1",
+    "async": "0.9.0",
+    "body-parser": "1.5.2",
+    "compression": "1.0.9",
+    "express": "4.7.4",
+    "request": "2.40.0",
+    "uri-template": "0.4.1",
+    "handlebars": "2.0.0-alpha.4",
+    "serve-static": "1.5.1",
+    "mongoose": "3.8.15"
+  },
+  "devDependencies": {
+    "mocha": "~1.20.1"
+  }
+}
