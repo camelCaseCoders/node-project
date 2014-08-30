@@ -1,4 +1,4 @@
-angular.module('app', ['highscores', 'login', 'register', 'ngRoute'])
+angular.module('app', ['highscores', 'login', 'register', 'ngRoute', 'ngCookies'])
 .config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider) {
 	$routeProvider
 	.when('/', {
@@ -30,4 +30,22 @@ angular.module('app', ['highscores', 'login', 'register', 'ngRoute'])
 		}
 		return hash;
 	}
-});
+})
+.factory('session', ['$rootScope', '$http', '$cookieStore'],
+	function($rootScope, $http, $cookieStore) {
+		var session = {};
+		
+		$rootScopescope.$on('$locationChangeSuccess', function(event) {
+			session.loggedIn = $cookieStore.get('loggedIn');
+			if(session.loggedIn) {
+				if(session.user && session.user.username !== )
+				session.user = $http.get('/account/user').then(function() {
+				});	
+			}
+
+			
+		});
+
+		return session;
+	}
+);

@@ -1,5 +1,6 @@
 var express = require('express'),
-	database = require('./database.js');
+	database = require('./database.js'),
+	sessiont = require('./session.js');
 	
 module.exports.router = function() {
 	var router = express.Router();
@@ -45,7 +46,13 @@ module.exports.router = function() {
 	return router;
 }
 
-module.exports.authenticate = function() {
+module.exports.authenticate = session.middleware;
+
+
+
+
+
+authenticate = function() {
 	return function(req, res, next) {
 		var id = req.cookies.userId, hash = req.cookies.userHash;
 		if(id && hash) {
@@ -55,6 +62,9 @@ module.exports.authenticate = function() {
 				console.log(user);
 				if(user !== null) {
 					req.user = user;
+					res.cookie('loggedIn', true);
+				} else {
+					res.clearCookie('loggedIn');
 				}
 				next();
 			});
