@@ -14,12 +14,12 @@ var server = app.listen(8080, function() {
 
 database.connect();
 
-app.use(database.ensureConnected())
+app.use(database.ensureConnected());
 app.use(express.static(__dirname + '/static'));
 app.use(bodyParser.json());
 app.use(cookieParser());
-app.use(account.authenticate())
-app.use('/account', account.router())
+app.use(account.session());
+app.use('/account', account.router());
 app.use('/scores', highscores.router());
 app.get('/*', function(req, res, next) {
 	 res.sendfile(__dirname + '/static/index.html');

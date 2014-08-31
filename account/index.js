@@ -1,44 +1,53 @@
 var express = require('express'),
 	database = require('./database.js'),
-	sessiont = require('./session.js');
+	session = require('./session.js'),
+
+	COOKIE_USERNAME = 'username',
+	COOKIE_HASH = 'userhash';
 	
 module.exports.router = function() {
 	var router = express.Router();
 
 	router.post('/register', function(req, res, next) {
-		database.register({
+		console.log('/user');
+		database.registerUser({
 			username: req.body.username,
 			hash: req.body.hash
-		
-		}, function(err, user) {
+		},
+		function(err, user) {
 			if(err) next(err);
 
-			attemptLogin(user, res);
+			console.log('login with user: ' + JSON.stringify(user));
+
+			login(user, res);
 		});
 	});
 	router.post('/login', function(req, res, next) {
-		database.login({
+		database.findUser({
 			username: req.body.username,
 			hash: req.body.hash
 
 		}, function(err, user) {
 			if(err) next(err);
 
-			attemptLogin(user, res);
+			login(user, res);
 		});
 	});
 
 	router.post('/logout', function(req, res, next) {
-		res.clearCookie('userId');
-		res.clearCookie('userHash');
+		res.clearCookie(COOKIE_USERNAME);
+		res.clearCookie(COOKIE_HASH);
+		session.remove(req, res);
+
 		res.send(true);
 	});
 
-	function attemptLogin(user, res) {
+	function login(user, res) {
 		if(user === null) res.json(false);
 
-		res.cookie('userId', user._id);
-		res.cookie('userHash', user.hash);
+		res.cookie(COOKIE_USERNAME, user.username);
+		res.cookie(COOKIE_HASH, user.hash);
+		session.create(res, user);
 
 		res.json(true);
 	}
@@ -46,30 +55,4 @@ module.exports.router = function() {
 	return router;
 }
 
-module.exports.authenticate = session.middleware;
-
-
-
-
-
-authenticate = function() {
-	return function(req, res, next) {
-		var id = req.cookies.userId, hash = req.cookies.userHash;
-		if(id && hash) {
-			database.authenticate(id, hash, function(err, user) {
-				if(err) next(err);
-
-				console.log(user);
-				if(user !== null) {
-					req.user = user;
-					res.cookie('loggedIn', true);
-				} else {
-					res.clearCookie('loggedIn');
-				}
-				next();
-			});
-		} else {
-			next();
-		}
-	}
-}
+module.exports.session = session.middleware;

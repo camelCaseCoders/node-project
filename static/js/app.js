@@ -1,5 +1,5 @@
 angular.module('app', ['highscores', 'login', 'register', 'ngRoute', 'ngCookies'])
-.config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider) {
+.config(['$routeProvider', '$locationProvider', function($routeProvider) {
 	$routeProvider
 	.when('/', {
 		templateUrl: 'templates/highscores.html',
@@ -16,8 +16,6 @@ angular.module('app', ['highscores', 'login', 'register', 'ngRoute', 'ngCookies'
 	.otherwise({
 		redirectTo: '/'
 	});
-
-	$locationProvider.html5Mode(true);
 }])
 .factory('hashString', function() {
 	return function(string) {
@@ -31,21 +29,17 @@ angular.module('app', ['highscores', 'login', 'register', 'ngRoute', 'ngCookies'
 		return hash;
 	}
 })
-.factory('session', ['$rootScope', '$http', '$cookieStore'],
-	function($rootScope, $http, $cookieStore) {
+.factory('session', ['$rootScope', '$http', '$cookies',
+	function($rootScope, $http, $cookies) {
 		var session = {};
 		
-		$rootScopescope.$on('$locationChangeSuccess', function(event) {
-			session.loggedIn = $cookieStore.get('loggedIn');
-			if(session.loggedIn) {
-				if(session.user && session.user.username !== )
-				session.user = $http.get('/account/user').then(function() {
-				});	
+		$rootScope.$on('$locationChangeSuccess', function(event) {
+			if($cookies.sessionId) {
+				session.username = $cookies.username;
 			}
-
-			
 		});
 
 		return session;
 	}
-);
+])
+.run(['session', function(session){}]);
