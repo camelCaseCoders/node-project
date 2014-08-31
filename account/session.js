@@ -8,6 +8,7 @@ var generateUUID = require('node-uuid'),
 var sessions = {};
 
 function setCookie(res, id) {
+	// console.log('Set cookie ' + COOKIE + ' to ' + id + ' for ' + SESSION_AGE + 'ms');
 	res.cookie(COOKIE, id, {maxAge: SESSION_AGE});
 }
 
@@ -31,28 +32,31 @@ function removeSession(req, res) {
 module.exports.middleware = function() {
 	return function(req, res, next) {
 		var sessionId = req.cookies[COOKIE];
-		console.log('searching for session.', sessions);
 		if(sessionId in sessions) {
-			console.log('found in cookie');
+			// console.log('found user in cookie');
 			req.user = sessions[sessionId];
 			setCookie(res, sessionId);
 		
 			next();
 		} else {
+			var username = req.cookies.username,
+				hash = req.cookies.userhash;
+
+			if(!username || !hash) {
+				// console.log('not logged in');
+				return next();
+			}
+
 			database.findUser({
-				username: req.cookies.username,
-				hash: req.cookies.hash
+				username: username,
+				hash: hash
 			},
 			function(err, user) {
 				if(user !== null) {
-					console.log('created new');
+					// console.log('created new session');
 					createSession(res, user);
 					req.user = user;
-				} else {
-					console.log('removed session');
-					removeSession(req, res);
 				}
-				
 				next(err);
 			})
 		}

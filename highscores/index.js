@@ -5,7 +5,6 @@ module.exports.router = function() {
 	var router = express.Router();
 	
 	router.get('/all', function(req, res, next) {
-		console.log('YES');
 		database.getAll(function(err, scores) {
 			if(err) next(err);
 
@@ -22,7 +21,14 @@ module.exports.router = function() {
 	});
 
 	router.post('/add', function(req, res, next) {
-		database.add(req.body, function(err, score) {
+		if(!req.user) return console.log('no user in add');
+
+		database.add({
+			score: req.body.score,
+			time: Date.now(),
+			username: req.user.username
+		},
+		function(err, score) {
 			if(err) next(err);
 
 			res.json(score);
@@ -30,12 +36,23 @@ module.exports.router = function() {
 	});
 
 	router.post('/remove', function(req, res, next) {
-		console.log(req.body);
-		database.remove(req.body.id, function(err, score) {
-			if(err) next(err);
-			
-			res.json(true);
-		});
+		if(!req.user) return console.log('no user in remove');
+
+		database.find(req.body.id, function(err, score) {
+			if(score !== null) {
+				if(score.username === req.user.username) {
+					database.remove(score, function(err) {
+						if(err) next(err);
+						else res.json(true);
+					});
+				} else {
+					console.log('didnt own score');
+					res.json(false);
+				}
+			} else {
+				res.json(false);
+			}
+		})
 	});
 
 	return router;

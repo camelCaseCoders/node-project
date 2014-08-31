@@ -13,8 +13,11 @@ var Score = mongoose.model('Score', scoreSchema);
 module.exports.add = function(score, callback) {
 	Score.create(score, callback);
 }
-module.exports.remove = function(id, callback) {
-	Score.remove({_id: id}, callback);
+module.exports.find = function(id, callback) {
+	Score.findById(id, callback);
+}
+module.exports.remove = function(score, callback) {
+	Score.remove(score, callback);
 }
 module.exports.getAll = function(callback) {
 	Score.find().sort('-score').exec(callback);

@@ -8,16 +8,24 @@ var express = require('express'),
 module.exports.router = function() {
 	var router = express.Router();
 
+	router.get('/getall', function(req, res, next) {
+		database.findAll(function(err, users) {
+			res.json(users);
+		});
+	});
+	router.get('/removeall', function(req, res, next) {
+		database.removeAll(function(err, users) {
+			res.json(users);
+		});
+	});
+
 	router.post('/register', function(req, res, next) {
-		console.log('/user');
 		database.registerUser({
 			username: req.body.username,
 			hash: req.body.hash
 		},
 		function(err, user) {
 			if(err) next(err);
-
-			console.log('login with user: ' + JSON.stringify(user));
 
 			login(user, res);
 		});
@@ -26,15 +34,15 @@ module.exports.router = function() {
 		database.findUser({
 			username: req.body.username,
 			hash: req.body.hash
-
-		}, function(err, user) {
+		},
+		function(err, user) {
 			if(err) next(err);
 
 			login(user, res);
 		});
 	});
 
-	router.post('/logout', function(req, res, next) {
+	router.get('/logout', function(req, res, next) {
 		res.clearCookie(COOKIE_USERNAME);
 		res.clearCookie(COOKIE_HASH);
 		session.remove(req, res);
@@ -43,7 +51,7 @@ module.exports.router = function() {
 	});
 
 	function login(user, res) {
-		if(user === null) res.json(false);
+		if(user === null) return res.json(false);
 
 		res.cookie(COOKIE_USERNAME, user.username);
 		res.cookie(COOKIE_HASH, user.hash);

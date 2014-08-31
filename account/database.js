@@ -22,57 +22,20 @@ module.exports.findUser = function(user, callback) {
 }
 
 module.exports.registerUser = function(user, callback) {
-	User.findOne(user, function(err, foundUser) {
+	User.findOne({username: user.username}, function(err, foundUser) {
 		//No such user exists
 		if(foundUser === null) {
 			console.log('create user');
 			User.create(user, callback);
 		} else {
-			console.log('return foundUser');
-			callback(err, foundUser);
+			console.log('user already exists');
+			callback(err, null);
 		}
 	});
 }
-
-
-
-
-
-
-// module.exports.login = function(user, callback) {
-// 	User.findOne({username: user.username}, function(err, foundUser) {
-// 		if(foundUser === null || foundUser.hash !== user.hash) {
-// 			callback(err, null);
-// 		} else {
-// 			console.log(user);
-// 		}
-// 	});
-// }
-
-
-
-
-
-
-// module.exports.register = function(user, callback) {
-// 	User.findOne({username: user.username}, function(err, foundUser) {
-// 		//No such user exists
-// 		if(foundUser === null) {
-// 			User.create(user, callback);
-// 		} else {
-// 			callback(err, null);
-// 		}
-// 	});
-// }
-
-
-// module.exports.authenticate = function(id, hash, callback) {
-// 	User.findById(id, function(err, user) {
-// 		if(user === null || user.hash !== hash) {
-// 			callback(err, null);
-// 		} else {
-// 			callback(err, user);
-// 		}
-// 	});
-// }
-
+module.exports.findAll = function(callback) {
+	User.find(callback);
+}
+module.exports.removeAll = function(callback) {
+	User.remove(callback);
+}
