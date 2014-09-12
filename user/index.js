@@ -1,10 +1,39 @@
 var express = require('express'),
 	database = require('./database.js'),
-	session = require('./session.js'),
 
 	COOKIE_USERNAME = 'username',
 	COOKIE_HASH = 'userhash';
-	
+
+
+module.exports.authenticate = function() {
+	return function(req, res, next) {
+		if(req.session && !req.session.user) {
+			var username = req.cookies[COOKIE_USERNAME],
+				hash = req.cookies[COOKIE_HASH];
+
+			if(username && hash) {
+				database.findUser({
+					username: username,
+					hash: hash
+				},
+				function(err, user) {
+					if(err) next(err);
+
+					if(user !== null) {
+						req.session.user = user;
+					} else {
+						res.clearCookie(COOKIE_USERNAME);
+						res.clearCookie(COOKIE_HASH);
+					}
+					next();
+				})
+			}
+		} else {
+			next();
+		}
+	}
+}
+
 module.exports.router = function() {
 	var router = express.Router();
 
@@ -27,7 +56,7 @@ module.exports.router = function() {
 		function(err, user) {
 			if(err) next(err);
 
-			login(user, res);
+			login(user, req, res);
 		});
 	});
 	router.post('/login', function(req, res, next) {
@@ -38,29 +67,31 @@ module.exports.router = function() {
 		function(err, user) {
 			if(err) next(err);
 
-			login(user, res);
+			login(user, req, res);
 		});
 	});
 
 	router.get('/logout', function(req, res, next) {
+		delete req.session.user;
+
 		res.clearCookie(COOKIE_USERNAME);
 		res.clearCookie(COOKIE_HASH);
-		session.remove(req, res);
 
 		res.send(true);
 	});
 
-	function login(user, res) {
-		if(user === null) return res.json(false);
+	function login(user, req, res) {
+		if(user === null) {
+			return res.json(false);
+		}
+
+		req.session.user = user;
 
 		res.cookie(COOKIE_USERNAME, user.username);
 		res.cookie(COOKIE_HASH, user.hash);
-		session.create(res, user);
 
 		res.json(true);
 	}
 
 	return router;
 }
-
-module.exports.session = session.middleware;

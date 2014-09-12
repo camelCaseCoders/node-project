@@ -21,12 +21,13 @@ module.exports.router = function() {
 	});
 
 	router.post('/add', function(req, res, next) {
-		if(!req.user) return console.log('no user in add');
+		var user = req.session.user;
+		if(!user) next('No user in add score');
 
 		database.add({
 			score: req.body.score,
 			time: Date.now(),
-			username: req.user.username
+			username: user.username
 		},
 		function(err, score) {
 			if(err) next(err);
@@ -36,7 +37,8 @@ module.exports.router = function() {
 	});
 
 	router.post('/remove', function(req, res, next) {
-		if(!req.user) return console.log('no user in remove');
+		var user = req.session.user;
+		if(!user) next('No user in remove score');
 
 		database.find(req.body.id, function(err, score) {
 			if(score !== null) {
@@ -46,8 +48,7 @@ module.exports.router = function() {
 						else res.json(true);
 					});
 				} else {
-					console.log('didnt own score');
-					res.json(false);
+					next('Didnt own score');
 				}
 			} else {
 				res.json(false);

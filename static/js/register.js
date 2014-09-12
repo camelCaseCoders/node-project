@@ -2,7 +2,7 @@ angular.module('register', [])
 .controller('registerController', ['$scope', '$http', '$location', 'hashString',
 	function($scope, $http, $location, hash) {
 		$scope.register = function() {
-			$http.post('/account/register', {
+			$http.post('/user/register', {
 				username: $scope.username,
 				hash: hash($scope.username + $scope.password)
 			})

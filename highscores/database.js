@@ -5,7 +5,7 @@ var mongoose = require('mongoose'),
 var scoreSchema = new Schema({
 	score: {type: Number, default: 0},
 	username: {type: String, default: 'Anonymous'},
-	time: Date
+	time: {type: Date, default: Date.now}
 });
 
 var Score = mongoose.model('Score', scoreSchema);
