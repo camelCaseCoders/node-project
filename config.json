@@ -1,0 +1,6 @@
+{
+	"sessionAge": 300000,
+	"sessionCookie": "sessionId",
+	"usernameCookie": "username",
+	"userhashCookie": "userhash"
+}

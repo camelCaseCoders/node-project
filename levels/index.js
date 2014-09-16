@@ -1,95 +1,119 @@
 var express = require('express'),
-	database = require('./database.js');
+	Level = require('./level.js');
 
-module.exports.router = function() {
+module.exports.api = function() {
 	var router = express.Router();
-
-	//sort by: -likes, time
-	//from to
+	/*
+		req.query:
+			from, length
+			sort
+	*/
 	router.get('/interval', function(req, res, next) {
-		database.interval(req.body.sortBy, req.body.from, req.body.length, function(err, levels) {
-			if(err) next(err);
+		console.log(req.query);
+		Level.find()
+			.sort(req.query.sort)
+			.skip(freq.query.from)
+			.limit(req.query.length)
+			.exec(function(err, levels) {
+				if(err) next(err);
 
-			res.json(levels);
-		});
+				res.json(levels);
+			});
 	});
+	/*
+		req.body:
+			id
+	*/
 	router.get('/bycreator', function(req, res, next) {
-		database.bycreator(req.body.user, function(err, levels) {
-			if(err) next(err);
+		Level.find({
+				creator: req.body.id
+			})
+			.exec(function(err, level) {
+				if(err) next(err);
 
-			res.json(levels);
-		});
+				res.json(levels);
+			});
 	});
-	router.get('/fromid', function(req, res, next) {
-		database.fromid(req.body.id, function(err, level) {
+	/*
+		req.body:
+			id
+	*/
+	router.get('/byid', function(req, res, next) {
+		Level.findById(req.body.id, function(err, level) {
 			if(err) next(err);
 
 			res.json(level);
 		});
 	});
 
+	/*
+		LOGGED IN
+		req.body:
+			title
+			grid
+	*/
 	router.post('/submit', function(req, res, next) {
-		if(!req.session.user) {
-			next('Tried to submit level without user');
-		}
+		var user = req.session.user;
+		if(!user) return next('Tried to submit level without user');
 
-		database.submit({
+		Level.create({
 			title: req.body.title,
 			grid: req.body.grid,
-			creator: req.session.user._id
+			creator: user._id
 		},
 		function(err, level) {
 			if(err) next(err);
 
 			res.json(level);
-		})
-	});
-	router.post('/remove', function(req, res, next) {
-		if(!req.session.user) {
-			next('Tried to remove level without user');
-		}
-
-		database.fromid(req.body.id, function(err, level) {
-			if(err) next(err);
-
-			if(level.owner === req.session.user._id) {
-				database.remove(level, function(err, level) {
-					if(err) next(err);
-
-					res.json(level !== null);
-				});
-
-			} else {
-				next('Not owner of level');
-			}
 		});
 	});
-	router.post('/like', function(req, res, next) {
-		if(!req.session.user) {
-			next('Tried to like level without user');
-		}
+	/*
+		LOGGED IN
+		req.body:
+			id
+	*/
+	router.post('/remove', function(req, res, next) {
+		var user = req.session.user;
+		if(!user) return next('Tried to remove level without user');
 
-		database.fromid(req.body.id, function(err, level) {
-			if(err) next(err);
-
-			var index = level.likes.indexOf(req.session.user._id),
-				like = index === -1;
-
-			if(like) {
-				level.likes.push(req.session.user._id);
-			} else {
-				
-			}
-
-
-			database.like(level, like, function(err, level) {
+		Level.findById(req.body.id)
+			//Make sure user owns it
+			.where('creator').equals(user._id)
+			.remove(function(err, level) {
 				if(err) next(err);
 
-				res.json(like);
-			});
-		});
-
+				res.json(level !== null);
+			})
 	});
 
+
+	// router.post('/like', function(req, res, next) {
+	// 	if(!req.session.user) {
+	// 		next('Tried to like level without user');
+	// 	}
+
+	// 	levels.findById(req.body.id, function(err, level) {
+	// 		if(err) next(err);
+
+	// 		if(level === null) {
+	// 			return next('No such level');
+	// 		}
+
+	// 		var index = level.likes.indexOf(req.session.user._id),
+	// 			like = index === -1;
+
+	// 		if(like) {
+	// 			level.likes.push(req.session.user._id);
+	// 		} else {
+	// 			level.likes.splice(index, 1);
+	// 		}
+	// 		level.markModified('likes');
+	// 		level.save();
+
+	// 		res.json(like);
+	// 	});
+
+	// });
+
 	return router;
-}
+};

@@ -1,71 +1,84 @@
 var express = require('express'),
-	database = require('./database.js'),
+	User = require('./user.js'),
 
-	COOKIE_USERNAME = 'username',
-	COOKIE_HASH = 'userhash';
+	config = require('../config.json'),
+	COOKIE_USERNAME = config.usernameCookie,
+	COOKIE_HASH = config.userhashCookie;
 
 
 module.exports.authenticate = function() {
 	return function(req, res, next) {
-		if(req.session && !req.session.user) {
-			var username = req.cookies[COOKIE_USERNAME],
+		var username = req.cookies[COOKIE_USERNAME],
 				hash = req.cookies[COOKIE_HASH];
 
-			if(username && hash) {
-				database.findUser({
-					username: username,
-					hash: hash
-				},
-				function(err, user) {
-					if(err) next(err);
+		if(!req.session.user && username && hash) {
+			User.findOne({
+				username: username,
+				hash: hash
+			},
+			function(err, user) {
+				if(err) next(err);
 
-					if(user !== null) {
-						req.session.user = user;
-					} else {
-						res.clearCookie(COOKIE_USERNAME);
-						res.clearCookie(COOKIE_HASH);
-					}
-					next();
-				})
-			}
-		} else {
-			next();
+				if(user !== null) {
+					req.session.user = user;
+				} else {
+					res.clearCookie(COOKIE_USERNAME);
+					res.clearCookie(COOKIE_HASH);
+				}
+				next();
+			})
+			//Prevent next from getting called
+			return;
 		}
+		next();
 	}
-}
+};
 
-module.exports.router = function() {
+module.exports.api = function() {
 	var router = express.Router();
 
-	router.get('/getall', function(req, res, next) {
-		database.findAll(function(err, users) {
+	router.get('/all', function(req, res, next) {
+		User.find({}, '-__v', function(err, users) {
 			res.json(users);
 		});
 	});
 	router.get('/removeall', function(req, res, next) {
-		database.removeAll(function(err, users) {
+		User.remove(function(err, users) {
 			res.json(users);
 		});
 	});
 
+	/*
+		req.body:
+			username
+			hash
+	*/
 	router.post('/register', function(req, res, next) {
-		database.registerUser({
+		console.log(req.body)
+		User.create({
 			username: req.body.username,
 			hash: req.body.hash
 		},
 		function(err, user) {
-			if(err) next(err);
+			if(err) return next(err);
 
 			login(user, req, res);
 		});
 	});
+
+	/*
+		req.body:
+			username
+			hash
+	*/
 	router.post('/login', function(req, res, next) {
-		database.findUser({
+		console.log(req.body);
+		User.findOne({
 			username: req.body.username,
 			hash: req.body.hash
 		},
 		function(err, user) {
-			if(err) next(err);
+			if(err) return next(err);
 
 			login(user, req, res);
 		});
@@ -94,4 +107,4 @@ module.exports.router = function() {
 	}
 
 	return router;
-}
+};

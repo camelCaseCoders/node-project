@@ -7,8 +7,8 @@ var express = require('express'),
 
 	session = require('./session/'),
 	user = require('./user/'),
-	highscores = require('./highscores/'),
-	levels = require('./levels/');
+	levels = require('./levels/'),
+	scores = require('./scores/');
 
 //Dont start until connected to mongodb
 database.connect(function() {
@@ -16,8 +16,11 @@ database.connect(function() {
 		console.log('Server up on port 8080.')
 	});
 
+	//Enable CORS
 	app.use(function(req, res, next) {
-		res.header("Access-Control-Allow-Origin", "*");
+	    res.setHeader('Access-Control-Allow-Origin', '*');
+	    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+
 		next();
 	})
 	// app.use(express.static(__dirname + '/static'));
@@ -25,26 +28,20 @@ database.connect(function() {
 	app.use(bodyParser.json());
 	app.use(cookieParser());
 	app.use(session());
-	app.use('/user', user.router());
+	app.use('/user', user.api());
 	app.use(user.authenticate());
-	app.use('/levels', levels.router());
-	app.use('/scores', highscores.router());
-	
+	app.use('/levels', levels.api());
+	app.use('/scores', scores.api());
+	//User debug
 	app.use(function(req, res) {
 		console.log(req.session.user ? 'Logged in as ' + req.session.user.username : 'Logged out');
 		res.json(false);
 	});
+	//Error logging
 	app.use(function(err, req, res, next) {
 		console.log('Error: %s', err);
 		res.status(500);
 		res.json('error ' + err);
 	});
-	
-	// app.use('/levels', levels.router());
-	// app.use('/scores', highscores.router());
-	// app.get('/*', function(req, res, next) {
-		// res.sendfile(__dirname + '/static/index.html');
-	// });
-
 });
 

@@ -1,10 +1,10 @@
 var generateUUID = require('node-uuid'),
 
-	SESSION_AGE = 300000,
-	COOKIE = 'sessionId';
+	config = require('../config.json'),
+	SESSION_AGE = config.sessionAge,
+	COOKIE = config.sessionCookie;
 
 var sessions = {};
-
 module.exports = function() {
 	return function(req, res, next) {
 		var sessionId = req.cookies[COOKIE];
