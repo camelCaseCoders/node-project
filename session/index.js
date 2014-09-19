@@ -10,12 +10,11 @@ module.exports = function() {
 		var sessionId = req.cookies[COOKIE];
 		if(sessionId in sessions) {
 			req.session = sessions[sessionId];
-			setCookie(res, sessionId);
 		} else {
 			sessionId = generateUUID();
 			req.session = sessions[sessionId] = {};
-			setCookie(res, sessionId);
 		}
+		setCookie(res, sessionId);
 		next();
 	}
 }
