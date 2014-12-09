@@ -1,8 +1,22 @@
 var express = require('express'),
-	Level = require('./level.js');
+	Level = require('./level.js'),
+	error = require('../error.js');
 
 module.exports.api = function() {
 	var router = express.Router();
+
+	/*
+	*/
+	router.get('/all', function(req, res, next) {
+		Level.find()
+			.populate('creator', 'username')
+			.exec(function(err, levels) {
+				if(err) next(err);
+
+				res.json(levels);
+			});
+	});
+	
 	/*
 		req.query:
 			from, length
@@ -28,7 +42,22 @@ module.exports.api = function() {
 		Level.find({
 				creator: req.body.id
 			})
-			.exec(function(err, level) {
+			.exec(function(err, levels) {
+				if(err) next(err);
+
+				res.json(levels);
+			});
+	});
+	/*
+	*/
+	router.get('/mine', function(req, res, next) {
+		var user = req.session.user;
+		if(!user) return next(error.notLoggedInError);
+
+		Level.find({
+				creator: user
+			})
+			.exec(function(err, levels) {
 				if(err) next(err);
 
 				res.json(levels);
@@ -54,7 +83,7 @@ module.exports.api = function() {
 	*/
 	router.post('/submit', function(req, res, next) {
 		var user = req.session.user;
-		if(!user) return next('Tried to submit level without user');
+		if(!user) return next(error.notLoggedInError);
 
 		Level.create({
 			title: req.body.title,
@@ -72,9 +101,9 @@ module.exports.api = function() {
 		req.body:
 			id
 	*/
-	router.post('/remove', function(req, res, next) {
+	router.delete('/byid', function(req, res, next) {
 		var user = req.session.user;
-		if(!user) return next('Tried to remove level without user');
+		if(!user) return next(error.notLoggedInError);
 
 		Level.findById(req.body.id)
 			//Make sure user owns it

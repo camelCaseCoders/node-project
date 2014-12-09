@@ -5,7 +5,7 @@ var mongoose = require('mongoose'),
 var scoreSchema = new Schema({
 	level: {
 		type: Schema.Types.ObjectId,
-		// ref: 'Level',
+		ref: 'Level',
 		required: true,
 		select: false
 	},

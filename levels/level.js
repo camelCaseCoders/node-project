@@ -6,24 +6,20 @@ var levelSchema = new Schema({
 		type: String,
 		required: true
 	},
-	grid: [{
-		type: String,
-		trim: true,
-		validate: /^([\da-f]{3}|[\da-f]{6})$/i,
-		default: 'fff'
-	}],
+	grid: [Number],
 	likes: [{
 		type: Schema.Types.ObjectId
 	}],
 	creator: {
 		type: Schema.Types.ObjectId,
+		ref: 'User',
 		required: true
 	},
-	scores: {
+	scores: [{
 		type: Schema.Types.ObjectId,
 		ref: 'Score',
 		select: false
-	},
+	}],
 	time: {
 		type: Date,
 		default: Date.now

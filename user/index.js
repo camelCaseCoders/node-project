@@ -27,7 +27,7 @@ module.exports.authenticate = function() {
 				}
 				next();
 			})
-			//Prevent next from getting called
+			//Prevent next from getting called before database request has finished
 			return;
 		}
 		next();
@@ -54,7 +54,6 @@ module.exports.api = function() {
 			hash
 	*/
 	router.post('/register', function(req, res, next) {
-		console.log(req.body)
 		User.create({
 			username: req.body.username,
 			hash: req.body.hash
@@ -72,7 +71,6 @@ module.exports.api = function() {
 			hash
 	*/
 	router.post('/login', function(req, res, next) {
-		console.log(req.body);
 		User.findOne({
 			username: req.body.username,
 			hash: req.body.hash
@@ -82,6 +80,16 @@ module.exports.api = function() {
 
 			login(user, req, res);
 		});
+	});
+
+	//
+	router.get('/me', function(req, res, next) {
+		var user = req.session.user;
+		if(user) {
+			sendUser(user, res);
+		} else {
+			res.send(false);
+		}
 	});
 
 	router.get('/logout', function(req, res, next) {
@@ -103,7 +111,14 @@ module.exports.api = function() {
 		res.cookie(COOKIE_USERNAME, user.username);
 		res.cookie(COOKIE_HASH, user.hash);
 
-		res.json(true);
+		sendUser(user, res);
+	}
+
+	function sendUser(user, res) {
+		res.json({
+			username: user.username,
+			id: user._id
+		});
 	}
 
 	return router;

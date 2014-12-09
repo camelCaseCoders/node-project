@@ -1,5 +1,6 @@
 var mongoose = require('mongoose'),
-	Schema = mongoose.Schema;
+	Schema = mongoose.Schema,
+	error = require('../error.js');
 
 var userSchema = new Schema({
 	username: {
@@ -15,12 +16,12 @@ var userSchema = new Schema({
 });
 
 var User = mongoose.model('User', userSchema);
-userSchema.pre('init', function(next) {
+userSchema.pre('save', function(next) {
 	User.findOne({username: this.username}, function(err, user) {
 		if(user === null) {
 			next();
 		} else {
-			next(new Error('User already exists'));
+			next(new error.UserError('User already exists'));
 		}
 	});
 });

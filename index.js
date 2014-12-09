@@ -8,7 +8,8 @@ var express = require('express'),
 	session = require('./session/'),
 	user = require('./user/'),
 	levels = require('./levels/'),
-	scores = require('./scores/');
+	scores = require('./scores/'),
+	error = require('./error.js');
 
 //Dont start until connected to mongodb
 database.connect(function() {
@@ -18,30 +19,40 @@ database.connect(function() {
 
 	//Enable CORS
 	app.use(function(req, res, next) {
-	    res.setHeader('Access-Control-Allow-Origin', '*');
-	    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+		res.header('Access-Control-Allow-Credentials', true);
+		res.header('Access-Control-Allow-Origin', req.headers.origin);
+		res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+		res.header('Access-Control-Allow-Headers', 'Content-Type,Accept,X-Requested-With');
 
-		next();
-	})
+		if (req.method != 'OPTIONS') return next();
+
+   		res.status(204).end();
+   	});
 	// app.use(express.static(__dirname + '/static'));
 	app.use(express.static('static'));
 	app.use(bodyParser.json());
 	app.use(cookieParser());
 	app.use(session());
-	app.use('/user', user.api());
 	app.use(user.authenticate());
-	app.use('/levels', levels.api());
+	app.use('/user', user.api());
+	app.use('/level', levels.api());
 	app.use('/scores', scores.api());
 	//User debug
-	app.use(function(req, res) {
+	app.use(function(req, res, next) {
 		console.log(req.session.user ? 'Logged in as ' + req.session.user.username : 'Logged out');
 		res.json(false);
+
+		next();
 	});
 	//Error logging
 	app.use(function(err, req, res, next) {
-		console.log('Error: %s', err);
-		res.status(500);
-		res.json('error ' + err);
+		if(err instanceof error.ServerError) {
+			res.status(500);
+		} else if(err instanceof error.UserError) {
+			res.status(200);
+		}
+		console.log(err);
+		res.json(err);
 	});
 });
 

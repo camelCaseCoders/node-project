@@ -27,7 +27,7 @@ module.exports.api = function() {
 			.sort(req.query.sort)
 			.skip(req.query.from)
 			.limit(req.query.length)
-			.populate('owner')
+			.populate('creator', 'username')
 			.exec(function(err, scores) {
 				if(err) next(err);
 
@@ -42,7 +42,7 @@ module.exports.api = function() {
 	*/
 	router.post('/add', function(req, res, next) {
 		var user = req.session.user;
-		if(!user) return next('No user in add score');
+		if(!user) return error.notLoggedInError;
 
 		Score.create({
 			level: level._id,
@@ -63,7 +63,7 @@ module.exports.api = function() {
 	*/
 	router.post('/remove', function(req, res, next) {
 		var user = req.session.user;
-		if(!user) return next('No user in remove score');
+		if(!user) return error.notLoggedInError;
 
 		Score.findById(req.body.id)
 			.where('owner', user._id)
