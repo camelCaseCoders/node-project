@@ -116,8 +116,7 @@ module.exports.api = function() {
 
 	function sendUser(user, res) {
 		res.json({
-			username: user.username,
-			id: user._id
+			username: user.username
 		});
 	}
 
