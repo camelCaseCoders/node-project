@@ -1,6 +1,6 @@
 var mongoose = require('mongoose'),
-	connection = mongoose.connection,
-	Schema = mongoose.Schema;
+	Schema = mongoose.Schema,
+	error = require('../error.js');
 
 var scoreSchema = new Schema({
 	level: {
@@ -25,13 +25,15 @@ var scoreSchema = new Schema({
 });
 
 var Level = mongoose.model('Level');
+
+var noLevelError = new error.UserError('Level does not exist'); 
 scoreSchema.pre('save', function(next) {
 	// this.model('Level').findById(this.level, function(err, level) {
 	Level.findById(this.level, function(err, level) {
 		if(err) next(err);
 		
 		if(level === null) {
-			next(new Error('Level doesn\'t exist'));
+			next(noLevelError);
 		} else {
 			next();
 		}

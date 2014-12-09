@@ -18,18 +18,18 @@ module.exports.api = function() {
 	});
 	
 	/*
-		req.query:
+		req.body:
 			from, length
 			sort
 	*/
 	router.get('/interval', function(req, res, next) {
-		console.log(req.query);
 		Level.find()
-			.sort(req.query.sort)
-			.skip(freq.query.from)
-			.limit(req.query.length)
+			.sort(req.body.sort)
+			.skip(req.body.from)
+			.limit(req.body.length)
+			.populate('creator', 'username')
 			.exec(function(err, levels) {
-				if(err) next(err);
+				if(err) return next(err);
 
 				res.json(levels);
 			});
@@ -43,7 +43,7 @@ module.exports.api = function() {
 				creator: req.body.id
 			})
 			.exec(function(err, levels) {
-				if(err) next(err);
+				if(err) return next(err);
 
 				res.json(levels);
 			});
@@ -58,7 +58,7 @@ module.exports.api = function() {
 				creator: user
 			})
 			.exec(function(err, levels) {
-				if(err) next(err);
+				if(err) return next(err);
 
 				res.json(levels);
 			});
@@ -69,7 +69,7 @@ module.exports.api = function() {
 	*/
 	router.get('/byid', function(req, res, next) {
 		Level.findById(req.body.id, function(err, level) {
-			if(err) next(err);
+			if(err) return next(err);
 
 			res.json(level);
 		});
@@ -81,6 +81,7 @@ module.exports.api = function() {
 			title
 			grid
 	*/
+	var submitError = new error.UserError('Incorrect level submited');
 	router.post('/submit', function(req, res, next) {
 		var user = req.session.user;
 		if(!user) return next(error.notLoggedInError);
@@ -91,9 +92,11 @@ module.exports.api = function() {
 			creator: user._id
 		},
 		function(err, level) {
-			if(err) next(err);
-
-			res.json(level);
+			if(err) {
+				next(err instanceof error.UserError ? err : submitError);	
+			} else {
+				res.json(level);
+			}
 		});
 	});
 	/*
@@ -109,9 +112,9 @@ module.exports.api = function() {
 			//Make sure user owns it
 			.where('creator').equals(user._id)
 			.remove(function(err, level) {
-				if(err) next(err);
+				if(err) return next(err);
 
-				res.json(level !== null);
+				res.json(!!level);
 			})
 	});
 
