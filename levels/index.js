@@ -50,7 +50,7 @@ module.exports.api = function() {
 	});
 	/*
 	*/
-	router.get('/mine', function(req, res, next) {
+	router.get('/my', function(req, res, next) {
 		var user = req.session.user;
 		if(!user) return next(error.notLoggedInError);
 
