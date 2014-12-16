@@ -9,6 +9,7 @@ module.exports.api = function() {
 	*/
 	router.get('/all', function(req, res, next) {
 		Level.find()
+			.select('-__v -scores -likes')
 			.populate('creator', 'username')
 			.exec(function(err, levels) {
 				if(err) next(err);
@@ -24,6 +25,7 @@ module.exports.api = function() {
 	*/
 	router.get('/interval', function(req, res, next) {
 		Level.find()
+			.select('-__v -scores -likes')
 			.sort(req.body.sort)
 			.skip(req.body.from)
 			.limit(req.body.length)
@@ -42,6 +44,7 @@ module.exports.api = function() {
 		Level.find({
 				creator: req.body.id
 			})
+			.select('-__v -scores -likes')
 			.exec(function(err, levels) {
 				if(err) return next(err);
 
@@ -57,6 +60,7 @@ module.exports.api = function() {
 		Level.find({
 				creator: user
 			})
+			.select('-__v -scores -likes')
 			.exec(function(err, levels) {
 				if(err) return next(err);
 
@@ -64,11 +68,13 @@ module.exports.api = function() {
 			});
 	});
 	/*
-		req.body:
+		req.query:
 			id
 	*/
 	router.get('/byid', function(req, res, next) {
-		Level.findById(req.body.id, function(err, level) {
+		Level.findById(req.query.id)
+			.select('-__v -scores -likes')
+			.exec(function(err, level) {
 			if(err) return next(err);
 
 			res.json(level);
@@ -109,6 +115,7 @@ module.exports.api = function() {
 		if(!user) return next(error.notLoggedInError);
 
 		Level.findById(req.body.id)
+			.select('-__v -scores -likes')
 			//Make sure user owns it
 			.where('creator').equals(user._id)
 			.remove(function(err, level) {

@@ -32,6 +32,10 @@ database.connect(function() {
 	app.use(express.static('static'));
 	app.use(bodyParser.json());
 	app.use(cookieParser());
+	app.use(function(req, res, next) {
+		console.log(req.method, req.url)
+		next();
+	})
 	app.use(session());
 	app.use(user.authenticate());
 	app.use('/user', user.api());
@@ -39,8 +43,8 @@ database.connect(function() {
 	app.use('/scores', scores.api());
 	//User debug
 	app.use(function(req, res, next) {
-		console.log(req.session.user ? 'Logged in as ' + req.session.user.username : 'Logged out');
-		res.json(false);
+		// console.log(req.session.user ? 'Logged in as ' + req.session.user.username : 'Logged out');
+		// res.json(false);
 
 		next();
 	});

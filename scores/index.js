@@ -9,7 +9,9 @@ module.exports.api = function() {
 		level
 	*/
 	router.get('/all', function(req, res, next) {
-		Score.find({level: req.query.level}, function(err, scores) {
+		Score.find({level: req.query.level})
+			.select('-__v')
+			.exec(function(err, scores) {
 			if(err) next(err);
 
 			res.json(scores);
@@ -24,6 +26,7 @@ module.exports.api = function() {
 	*/
 	router.get('/interval', function(req, res, next) {
 		Score.find({level: req.query.level})
+			.select('-__v')
 			.sort(req.query.sort)
 			.skip(req.query.from)
 			.limit(req.query.length)
