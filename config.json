@@ -1,5 +1,6 @@
 {
-	"sessionAge": 300000,
+	"sessionAge": 30000,
+	"sessionPollTime": 15000,
 	"sessionCookie": "sessionId",
 	"usernameCookie": "username",
 	"userhashCookie": "userhash"

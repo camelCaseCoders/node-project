@@ -20,7 +20,7 @@ var User = mongoose.model('User', userSchema);
 var userExistsError = new error.UserError('User already exists');
 userSchema.pre('save', function(next) {
 	User.findOne({username: this.username}, function(err, user) {
-		if(user === null) {
+		if(user) {
 			next(userExistsError);
 		} else {
 			next();

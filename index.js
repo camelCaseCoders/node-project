@@ -1,5 +1,8 @@
 var express = require('express'),
 	app = express(),
+	server = require('http').createServer(app),
+	io = require('socket.io')(server),
+
 	bodyParser = require('body-parser'),
 	cookieParser = require('cookie-parser'),
 
@@ -9,13 +12,18 @@ var express = require('express'),
 	user = require('./user/'),
 	levels = require('./levels/'),
 	scores = require('./scores/'),
-	error = require('./error.js');
+
+	error = require('./error.js'),
+
+	socket = require('./socket/');
 
 //Dont start until connected to mongodb
 database.connect(function() {
-	app.listen(8080, function() {
+	server.listen(8080, function() {
 		console.log('Server up on port 8080.')
 	});
+
+	socket(io);
 
 	//Enable CORS
 	app.use(function(req, res, next) {
@@ -32,15 +40,17 @@ database.connect(function() {
 	app.use(express.static('static'));
 	app.use(bodyParser.json());
 	app.use(cookieParser());
+
 	app.use(function(req, res, next) {
 		console.log(req.method, req.url)
 		next();
 	})
+	
 	app.use(session());
 	app.use(user.authenticate());
-	app.use('/user', user.api());
-	app.use('/level', levels.api());
-	app.use('/scores', scores.api());
+	app.use('/user', user.api(io));
+	app.use('/level', levels.api(io));
+	app.use('/scores', scores.api(io));
 	//User debug
 	app.use(function(req, res, next) {
 		// console.log(req.session.user ? 'Logged in as ' + req.session.user.username : 'Logged out');

@@ -34,11 +34,11 @@ module.exports.authenticate = function() {
 	}
 };
 
-module.exports.api = function() {
+module.exports.api = function(io) {
 	var router = express.Router();
 
 	router.get('/all', function(req, res, next) {
-		User.find({}, '-__v', function(err, users) {
+		User.find(function(err, users) {
 			res.json(users);
 		});
 	});

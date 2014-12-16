@@ -1,19 +1,36 @@
 var express = require('express'),
-	Level = require('./level.js'),
+	level = require('./level.js'),
+	Level = level.Level,
 	error = require('../error.js');
 
-module.exports.api = function() {
+module.exports.api = function(io) {
+
+	level.bind(io);
+
 	var router = express.Router();
 
 	/*
 	*/
 	router.get('/all', function(req, res, next) {
 		Level.find()
-			.select('-__v -scores -likes')
+			.select('grid creator time title')
 			.populate('creator', 'username')
 			.exec(function(err, levels) {
 				if(err) next(err);
 
+				res.json(levels);
+			});
+	});
+
+	/*
+	*/
+	router.get('/removeall', function(req, res, next) {
+		Level.find()
+			.exec(function(err, levels) {
+				if(err) next(err);
+				levels.forEach(function(level) {
+					level.remove();
+				});
 				res.json(levels);
 			});
 	});
@@ -25,7 +42,7 @@ module.exports.api = function() {
 	*/
 	router.get('/interval', function(req, res, next) {
 		Level.find()
-			.select('-__v -scores -likes')
+			.select('grid creator time title')
 			.sort(req.body.sort)
 			.skip(req.body.from)
 			.limit(req.body.length)
@@ -44,7 +61,7 @@ module.exports.api = function() {
 		Level.find({
 				creator: req.body.id
 			})
-			.select('-__v -scores -likes')
+			.select('grid creator time title')
 			.exec(function(err, levels) {
 				if(err) return next(err);
 
@@ -60,7 +77,7 @@ module.exports.api = function() {
 		Level.find({
 				creator: user
 			})
-			.select('-__v -scores -likes')
+			.select('grid creator time title')
 			.exec(function(err, levels) {
 				if(err) return next(err);
 
@@ -73,7 +90,7 @@ module.exports.api = function() {
 	*/
 	router.get('/byid', function(req, res, next) {
 		Level.findById(req.query.id)
-			.select('-__v -scores -likes')
+			.select('grid creator time title')
 			.exec(function(err, level) {
 			if(err) return next(err);
 
@@ -98,11 +115,12 @@ module.exports.api = function() {
 			creator: user._id
 		},
 		function(err, level) {
+			// err = err instanceof error.UserError ? err : submitError;
 			if(err) {
-				next(err instanceof error.UserError ? err : submitError);	
-			} else {
-				res.json(level);
+				return next(err);	
 			}
+
+			res.json(true);
 		});
 	});
 	/*
@@ -115,13 +133,15 @@ module.exports.api = function() {
 		if(!user) return next(error.notLoggedInError);
 
 		Level.findById(req.body.id)
-			.select('-__v -scores -likes')
 			//Make sure user owns it
 			.where('creator').equals(user._id)
-			.remove(function(err, level) {
+			.exec(function(err, level) {
 				if(err) return next(err);
 
-				res.json(!!level);
+				if(level) {
+					level.remove();
+				}
+				return res.json(!!level);
 			})
 	});
 
