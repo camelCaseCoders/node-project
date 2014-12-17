@@ -45,7 +45,7 @@ database.connect(function() {
 		console.log(req.method, req.url)
 		next();
 	})
-	
+
 	app.use(session());
 	app.use(user.authenticate());
 	app.use('/user', user.api(io));
@@ -60,11 +60,10 @@ database.connect(function() {
 	});
 	//Error logging
 	app.use(function(err, req, res, next) {
-		if(err instanceof error.ServerError) {
-			res.status(500);
-		} else if(err instanceof error.UserError) {
-			res.status(200);
-		}
+		var status = err instanceof error.UserError ? 200 : 500;
+		
+		res.status(status);
+		
 		console.log(err);
 		res.json(err);
 	});

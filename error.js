@@ -16,7 +16,8 @@ AuthorizationError.prototype = Object.create(Error.prototype);
 module.exports = {
 	UserError: UserError,
 	ServerError: ServerError,
+	notFound: new UserError('Not found'),
 	AuthorizationError: AuthorizationError,
 	notLoggedInError: new AuthorizationError('Not logged in'),
-	notAuthorized: new AuthorizationError('Not authorized')
+	notAuthorized: new AuthorizationError('Not authorized'),
 };

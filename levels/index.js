@@ -13,7 +13,7 @@ module.exports.api = function(io) {
 	*/
 	router.get('/all', function(req, res, next) {
 		Level.find()
-			.select('grid creator time title')
+			.select('grid creator time title ratings')
 			.populate('creator', 'username')
 			.exec(function(err, levels) {
 				if(err) next(err);
@@ -36,16 +36,16 @@ module.exports.api = function(io) {
 	});
 	
 	/*
-		req.body:
+		req.query:
 			from, length
 			sort
 	*/
 	router.get('/interval', function(req, res, next) {
 		Level.find()
 			.select('grid creator time title')
-			.sort(req.body.sort)
-			.skip(req.body.from)
-			.limit(req.body.length)
+			.sort(req.query.sort)
+			.skip(req.query.from)
+			.limit(req.query.length)
 			.populate('creator', 'username')
 			.exec(function(err, levels) {
 				if(err) return next(err);
@@ -54,12 +54,12 @@ module.exports.api = function(io) {
 			});
 	});
 	/*
-		req.body:
+		req.query:
 			id
 	*/
 	router.get('/bycreator', function(req, res, next) {
 		Level.find({
-				creator: req.body.id
+				creator: req.query.id
 			})
 			.select('grid creator time title')
 			.exec(function(err, levels) {
@@ -115,10 +115,7 @@ module.exports.api = function(io) {
 			creator: user._id
 		},
 		function(err, level) {
-			// err = err instanceof error.UserError ? err : submitError;
-			if(err) {
-				return next(err);	
-			}
+			if(err) return next(err);	
 
 			res.json(true);
 		});
@@ -126,7 +123,7 @@ module.exports.api = function(io) {
 	/*
 		LOGGED IN
 		req.body:
-			id
+			id (for level)
 	*/
 	router.delete('/byid', function(req, res, next) {
 		var user = req.session.user;
@@ -144,35 +141,64 @@ module.exports.api = function(io) {
 				return res.json(!!level);
 			})
 	});
+	/*
+		LOGGED IN
+		req.body:
+			id (for level)
+			rating
+	*/
+	router.post('/rate', function(req, res, next) {
+		var user = req.session.user;
+		if(!user) return next(error.notLoggedInError);
+
+		var rating = req.body.rating;
+		Level.findById(req.body.id)
+			.where('')
 
 
-	// router.post('/like', function(req, res, next) {
-	// 	if(!req.session.user) {
-	// 		next('Tried to like level without user');
-	// 	}
 
-	// 	levels.findById(req.body.id, function(err, level) {
-	// 		if(err) next(err);
+		Level.update({_id: req.body.id},
+			{$addToSet: {
+				ratings: {by: user.id, rating: rating}
+			}
+		}, function(err, level) {
+			if(err) return next(err);
+			res.json(level);
+		})
+		Level.findById(req.body.id)
+			.select('ratings')
+			.exec(function(err, level) {
+				if(err) return next(err);
 
-	// 		if(level === null) {
-	// 			return next('No such level');
-	// 		}
+				if(level) {
+					var rated = false;
+					var ratings = level.ratings;
+					for(var i = 0; i < ratings.length; i++) {
+						if(ratings[i].by === user.id) {
+							ratings[i].rating = rating;
+							rated = true;
+							break;
+						}
+					}
 
-	// 		var index = level.likes.indexOf(req.session.user._id),
-	// 			like = index === -1;
+					if(!rated) {
+						ratings.push({
+							by: user.id,
+							rating: rating
+						});
+					}
 
-	// 		if(like) {
-	// 			level.likes.push(req.session.user._id);
-	// 		} else {
-	// 			level.likes.splice(index, 1);
-	// 		}
-	// 		level.markModified('likes');
-	// 		level.save();
+					level.markModified('ratings');
+					level.save();
 
-	// 		res.json(like);
-	// 	});
+					res.json(true);
+				} else {
+					next(error.NotFound);
+				}
+			});
+	});
 
-	// });
+
 
 	return router;
 };
