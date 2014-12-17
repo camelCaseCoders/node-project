@@ -156,6 +156,26 @@ module.exports.api = function(io) {
 			.where('')
 
 
+// db.books.update(
+//    { item: "ZZZ135" },
+//    {
+//      item: "ZZZ135",
+//      stock: 5,
+//      tags: [ "database" ]
+//    },
+//    { upsert: true }
+// )
+
+		// Rating.update(
+		// 	{level: req.body.id, by: user.id},
+		// 	{level: user.id, by: user.id, rating: req.body.rating},
+		// 	{upsert: true})
+
+		// Rating.aggregate([
+		// 	{$match: {level: level._id}},
+		// 	{group: {_id: null, avg: {$avg, '$rating'}}}
+		// ])
+
 
 		Level.update({_id: req.body.id},
 			{$addToSet: {
@@ -165,37 +185,37 @@ module.exports.api = function(io) {
 			if(err) return next(err);
 			res.json(level);
 		})
-		Level.findById(req.body.id)
-			.select('ratings')
-			.exec(function(err, level) {
-				if(err) return next(err);
+		// Level.findById(req.body.id)
+		// 	.select('ratings')
+		// 	.exec(function(err, level) {
+		// 		if(err) return next(err);
 
-				if(level) {
-					var rated = false;
-					var ratings = level.ratings;
-					for(var i = 0; i < ratings.length; i++) {
-						if(ratings[i].by === user.id) {
-							ratings[i].rating = rating;
-							rated = true;
-							break;
-						}
-					}
+		// 		if(level) {
+		// 			var rated = false;
+		// 			var ratings = level.ratings;
+		// 			for(var i = 0; i < ratings.length; i++) {
+		// 				if(ratings[i].by === user.id) {
+		// 					ratings[i].rating = rating;
+		// 					rated = true;
+		// 					break;
+		// 				}
+		// 			}
 
-					if(!rated) {
-						ratings.push({
-							by: user.id,
-							rating: rating
-						});
-					}
+		// 			if(!rated) {
+		// 				ratings.push({
+		// 					by: user.id,
+		// 					rating: rating
+		// 				});
+		// 			}
 
-					level.markModified('ratings');
-					level.save();
+		// 			level.markModified('ratings');
+		// 			level.save();
 
-					res.json(true);
-				} else {
-					next(error.NotFound);
-				}
-			});
+		// 			res.json(true);
+		// 		} else {
+		// 			next(error.NotFound);
+		// 		}
+		// 	});
 	});
 
 
