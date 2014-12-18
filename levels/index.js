@@ -1,6 +1,8 @@
 var express = require('express'),
 	level = require('./level.js'),
 	Level = level.Level,
+	ObjectId = require('mongoose').Types.ObjectId,
+	async = require('async'),
 	error = require('../error.js');
 
 module.exports.api = function(io) {
@@ -13,8 +15,9 @@ module.exports.api = function(io) {
 	*/
 	router.get('/all', function(req, res, next) {
 		Level.find()
-			.select('grid creator time title ratings')
+			.select('grid creator time title ratings averageRating')
 			.populate('creator', 'username')
+			.populate('ratings.by', 'username')
 			.exec(function(err, levels) {
 				if(err) next(err);
 
@@ -147,75 +150,55 @@ module.exports.api = function(io) {
 			id (for level)
 			rating
 	*/
+	var rateError = new error.UserError('Invalid rate');
 	router.post('/rate', function(req, res, next) {
 		var user = req.session.user;
 		if(!user) return next(error.notLoggedInError);
 
-		var rating = req.body.rating;
-		Level.findById(req.body.id)
-			.where('')
+		var id = req.body.id, rating = req.body.rating;
 
+		if(!id || !rating) return next(rateError);
 
-// db.books.update(
-//    { item: "ZZZ135" },
-//    {
-//      item: "ZZZ135",
-//      stock: 5,
-//      tags: [ "database" ]
-//    },
-//    { upsert: true }
-// )
-
-		// Rating.update(
-		// 	{level: req.body.id, by: user.id},
-		// 	{level: user.id, by: user.id, rating: req.body.rating},
-		// 	{upsert: true})
-
-		// Rating.aggregate([
-		// 	{$match: {level: level._id}},
-		// 	{group: {_id: null, avg: {$avg, '$rating'}}}
-		// ])
-
-
-		Level.update({_id: req.body.id},
-			{$addToSet: {
-				ratings: {by: user.id, rating: rating}
+		async.series([
+			function(callback) {
+				Level.update(
+					{_id: id, 'ratings.by': user._id},
+					{$set: {'ratings.$.rating': rating}},
+					callback);
+			},
+			function(callback) {
+				Level.update(
+					{_id: id, 'ratings.by': {$ne: user._id}},
+					{$push: {ratings: {by: user._id, rating: rating}}},
+					callback);
 			}
-		}, function(err, level) {
+		], function(err, a) {
 			if(err) return next(err);
-			res.json(level);
+
+			res.json(a);
+
+			Level.aggregate([
+				{$match: {_id: new ObjectId(id)}},
+				{$unwind: '$ratings'},
+				{$group: {_id: null, average: {$avg: '$ratings.rating'}}},
+				{$project: {_id: 0, average: 1}}
+			], function(err, result) {
+				if(err) next(err);
+
+				var average = result[0].average;
+
+				console.log(average);
+
+				Level.update(
+					{_id: id},
+					{$set: {averageRating: average}},
+				function(err, result) {
+					if(err) return next(err);
+
+					console.log(result);
+				});
+			});
 		})
-		// Level.findById(req.body.id)
-		// 	.select('ratings')
-		// 	.exec(function(err, level) {
-		// 		if(err) return next(err);
-
-		// 		if(level) {
-		// 			var rated = false;
-		// 			var ratings = level.ratings;
-		// 			for(var i = 0; i < ratings.length; i++) {
-		// 				if(ratings[i].by === user.id) {
-		// 					ratings[i].rating = rating;
-		// 					rated = true;
-		// 					break;
-		// 				}
-		// 			}
-
-		// 			if(!rated) {
-		// 				ratings.push({
-		// 					by: user.id,
-		// 					rating: rating
-		// 				});
-		// 			}
-
-		// 			level.markModified('ratings');
-		// 			level.save();
-
-		// 			res.json(true);
-		// 		} else {
-		// 			next(error.NotFound);
-		// 		}
-		// 	});
 	});
 
 

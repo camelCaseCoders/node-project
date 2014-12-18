@@ -8,24 +8,34 @@ var ratingValidator = [function(value) {
 	return Math.floor(value) === value;
 }, 'Invalid rating'];
 
+var rating = new Schema({
+	by: {
+		type: Schema.Types.ObjectId,
+		ref: 'User'
+	},
+	rating: {
+		type: Number,
+		min: 1,
+		max: 5,
+		validate: ratingValidator
+	}
+});
+
 var schema = new Schema({
 	title: {
 		type: String,
 		required: true
 	},
 	grid: [Number],
-	ratings: [{
-		by: {
-			type: Schema.Types.ObjectId,
-			select: false
-		},
-		rating: {
-			type: Number,
-			min: 1,
-			max: 5,
-			validate: ratingValidator
-		}
-	}],
+	averageRating: {
+		type: Number,
+		required: false,
+		default: 0
+	},
+	ratings: {
+		type: [rating],
+		select: false
+	},
 	creator: {
 		type: Schema.Types.ObjectId,
 		ref: 'User',
