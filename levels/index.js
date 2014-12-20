@@ -15,9 +15,10 @@ module.exports.api = function(io) {
 	*/
 	router.get('/all', function(req, res, next) {
 		Level.find()
-			.select('grid creator time title ratings averageRating')
+			.select('grid creator time title ratings popularity')
 			.populate('creator', 'username')
 			.populate('ratings.by', 'username')
+			.sort('-popularity')
 			.exec(function(err, levels) {
 				if(err) next(err);
 
@@ -159,7 +160,8 @@ module.exports.api = function(io) {
 
 		if(!id || !rating) return next(rateError);
 
-		async.series([
+		// var start = Date.now();
+		async.parallel([
 			function(callback) {
 				Level.update(
 					{_id: id, 'ratings.by': user._id},
@@ -175,25 +177,33 @@ module.exports.api = function(io) {
 		], function(err, a) {
 			if(err) return next(err);
 
-			res.json(a);
+			// var add = Date.now();
+			// console.log('Adding rating took', add - start);
+
+			res.json(true);
 
 			Level.aggregate([
 				{$match: {_id: new ObjectId(id)}},
 				{$unwind: '$ratings'},
-				{$group: {_id: null, average: {$avg: '$ratings.rating'}}},
-				{$project: {_id: 0, average: 1}}
+				{$group: {_id: null, popularity: {$avg: '$ratings.rating'}}},
+				{$project: {_id: 0, popularity: 1}}
 			], function(err, result) {
 				if(err) next(err);
 
-				var average = result[0].average;
+				// var agg = Date.now();
+				// console.log('Aggregation took', agg - add);
+				var popularity = result[0].popularity;
 
-				console.log(average);
+				console.log(popularity);
 
 				Level.update(
 					{_id: id},
-					{$set: {averageRating: average}},
+					{$set: {popularity: popularity}},
 				function(err, result) {
 					if(err) return next(err);
+
+					// console.log('Update took', Date.now() - agg);
+					// console.log('Total time', Date.now() - start);
 
 					console.log(result);
 				});

@@ -27,7 +27,7 @@ var schema = new Schema({
 		required: true
 	},
 	grid: [Number],
-	averageRating: {
+	popularity: {
 		type: Number,
 		required: false,
 		default: 0
