@@ -46,10 +46,10 @@ function startPoll() {
 	setInterval(poll, POLL_TIME);
 }
 function poll() {
-	// console.log('sessions', Object.keys(sessions).map(function(key) {
-	// 	var session = sessions[key];
-	// 	return {ip: session.ip, user: session.user&&session.user.username};
-	// }));
+	console.log('sessions', Object.keys(sessions).map(function(key) {
+		var session = sessions[key];
+		return {ip: session.ip, user: session.user&&session.user.username};
+	}));
 	var expired = Date.now() - SESSION_AGE;
 	for(var key in sessions) {
 		if(sessions[key].time < expired) {

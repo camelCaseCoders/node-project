@@ -13,9 +13,15 @@ function AuthorizationError(message) {
 }
 AuthorizationError.prototype = Object.create(Error.prototype);
 
+function ValidationError(message) {
+	this.message = message;
+}
+ValidationError.prototype = Object.create(Error.prototype);
+
 module.exports = {
 	UserError: UserError,
 	ServerError: ServerError,
+	ValidationError: ValidationError,
 	notFound: new UserError('Not found'),
 	AuthorizationError: AuthorizationError,
 	notLoggedInError: new AuthorizationError('Not logged in'),

@@ -1,13 +1,8 @@
 var express = require('express'),
-	level = require('./level.js'),
-	Level = level.Level,
-	ObjectId = require('mongoose').Types.ObjectId,
-	async = require('async'),
+	Level = require('./level.js'),
 	error = require('../error.js');
 
-module.exports.api = function(io) {
-
-	level.bind(io);
+module.exports.api = function() {
 
 	var router = express.Router();
 
@@ -29,14 +24,9 @@ module.exports.api = function(io) {
 	/*
 	*/
 	router.get('/removeall', function(req, res, next) {
-		Level.find()
-			.exec(function(err, levels) {
-				if(err) next(err);
-				levels.forEach(function(level) {
-					level.remove();
-				});
-				res.json(levels);
-			});
+		Level.remove(function(err, effect) {
+			if(err) return next(err);
+		})
 	});
 	
 	/*
@@ -62,9 +52,7 @@ module.exports.api = function(io) {
 			id
 	*/
 	router.get('/bycreator', function(req, res, next) {
-		Level.find({
-				creator: req.query.id
-			})
+		Level.findOne({creator: req.query.id})
 			.select('grid creator time title')
 			.exec(function(err, levels) {
 				if(err) return next(err);
@@ -78,9 +66,7 @@ module.exports.api = function(io) {
 		var user = req.session.user;
 		if(!user) return next(error.notLoggedInError);
 
-		Level.find({
-				creator: user
-			})
+		Level.findOne({creator: user})
 			.select('grid creator time title')
 			.exec(function(err, levels) {
 				if(err) return next(err);
@@ -96,10 +82,10 @@ module.exports.api = function(io) {
 		Level.findById(req.query.id)
 			.select('grid creator time title')
 			.exec(function(err, level) {
-			if(err) return next(err);
+				if(err) return next(err);
 
-			res.json(level);
-		});
+				res.json(level);
+			});
 	});
 
 	/*
@@ -133,17 +119,11 @@ module.exports.api = function(io) {
 		var user = req.session.user;
 		if(!user) return next(error.notLoggedInError);
 
-		Level.findById(req.body.id)
-			//Make sure user owns it
-			.where('creator').equals(user._id)
-			.exec(function(err, level) {
-				if(err) return next(err);
-
-				if(level) {
-					level.remove();
-				}
-				return res.json(!!level);
-			})
+		Level.remove({creator: user._id}, function(err, effect) {
+			if(err) return next(err);
+			
+			res.json(effect);
+		});
 	});
 	/*
 		LOGGED IN
@@ -160,55 +140,11 @@ module.exports.api = function(io) {
 
 		if(!id || !rating) return next(rateError);
 
-		// var start = Date.now();
-		async.parallel([
-			function(callback) {
-				Level.update(
-					{_id: id, 'ratings.by': user._id},
-					{$set: {'ratings.$.rating': rating}},
-					callback);
-			},
-			function(callback) {
-				Level.update(
-					{_id: id, 'ratings.by': {$ne: user._id}},
-					{$push: {ratings: {by: user._id, rating: rating}}},
-					callback);
-			}
-		], function(err, a) {
+		Level.rate(id, user._id, +rating, function(err) {
 			if(err) return next(err);
 
-			// var add = Date.now();
-			// console.log('Adding rating took', add - start);
-
 			res.json(true);
-
-			Level.aggregate([
-				{$match: {_id: new ObjectId(id)}},
-				{$unwind: '$ratings'},
-				{$group: {_id: null, popularity: {$avg: '$ratings.rating'}}},
-				{$project: {_id: 0, popularity: 1}}
-			], function(err, result) {
-				if(err) next(err);
-
-				// var agg = Date.now();
-				// console.log('Aggregation took', agg - add);
-				var popularity = result[0].popularity;
-
-				console.log(popularity);
-
-				Level.update(
-					{_id: id},
-					{$set: {popularity: popularity}},
-				function(err, result) {
-					if(err) return next(err);
-
-					// console.log('Update took', Date.now() - agg);
-					// console.log('Total time', Date.now() - start);
-
-					console.log(result);
-				});
-			});
-		})
+		});
 	});
 
 

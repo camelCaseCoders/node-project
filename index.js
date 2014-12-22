@@ -48,9 +48,9 @@ database.connect(function() {
 
 	app.use(session());
 	app.use(user.authenticate());
-	app.use('/user', user.api(io));
-	app.use('/level', levels.api(io));
-	app.use('/scores', scores.api(io));
+	app.use('/user', user.api());
+	app.use('/level', levels.api());
+	app.use('/scores', scores.api());
 	//User debug
 	app.use(function(req, res, next) {
 		// console.log(req.session.user ? 'Logged in as ' + req.session.user.username : 'Logged out');
@@ -60,7 +60,8 @@ database.connect(function() {
 	});
 	//Error logging
 	app.use(function(err, req, res, next) {
-		var status = err instanceof error.UserError ? 200 : 500;
+		var status = (err instanceof error.UserError
+			|| err instanceof error.ValidationError) ? 200 : 500;
 		
 		res.status(status);
 		

@@ -1,12 +1,20 @@
 var mongoose = require('mongoose'),
 	Schema = mongoose.Schema,
+	ObjectId = require('mongoose').Types.ObjectId,
 	User = require('../user/user.js');
-	error = require('../error.js');
+	error = require('../error.js'),
+	async = require('async');
 
 var ratingValidator = [function(value) {
-	console.log('validating:', value);
-	return Math.floor(value) === value;
+	//Integer in interval [1,5]
+	return value > 0 && value < 6 && Math.floor(value) === value;
+
 }, 'Invalid rating'];
+
+var gridValidator = [function(value) {
+	return this.grid && this.grid.length > 0;
+
+}, 'Invalid grid'];
 
 var rating = new Schema({
 	by: {
@@ -15,8 +23,6 @@ var rating = new Schema({
 	},
 	rating: {
 		type: Number,
-		min: 1,
-		max: 5,
 		validate: ratingValidator
 	}
 });
@@ -26,7 +32,10 @@ var schema = new Schema({
 		type: String,
 		required: true
 	},
-	grid: [Number],
+	grid: {
+		type: [Number],
+		validate: gridValidator
+	},
 	popularity: {
 		type: Number,
 		required: false,
@@ -52,49 +61,51 @@ var schema = new Schema({
 	}
 });
 
+schema.statics.rate = function(id, userId, rating, callback) {
+	//Validate rating
+	if(!ratingValidator[0](rating)) {
+		return callback(new error.ValidationError(ratingValidator[1]));
+	}
+
+	async.parallel([
+		function(callback) {
+			Level.update(
+				{_id: id, 'ratings.by': userId},
+				{$set: {'ratings.$.rating': rating}},
+				callback);
+		},
+		function(callback) {
+			Level.update(
+				{_id: id, 'ratings.by': {$ne: userId}},
+				{$push: {ratings: {by: userId, rating: rating}}},
+				callback);
+		}
+	], function(err, effect) {
+		if(!effect) {
+			return callback(err);
+		}
+
+		// P(r, n) = r + 1 - 1/(n^k + 1)
+		Level.aggregate([
+			{$match: {_id: new ObjectId(id)}},
+			{$unwind: '$ratings'},
+			{$group: {_id: null, popularity: {$avg: '$ratings.rating'}}},
+			{$project: {_id: 0, popularity: 1}}
+		], function(err, result) {
+			if(err) return callback(err);
+
+			Level.update(
+				{_id: id},
+				{$set: {popularity: result[0].popularity}},
+			function(err, result) {
+				if(err) return callback(err);
+
+				callback(null);
+			});
+		});
+	})
+};
+
 var Level = mongoose.model('Level', schema);
 
-schema.path('grid').validate(function(value) {
-	return this.grid && this.grid.length > 0;
-
-}, 'Invalid grid');
-
-function bind(io) {
-
-	schema.path()
-
-	schema.pre('save', function (next) {
-	    this.wasNew = this.isNew;
-	    console.log(this.__proto__);
-		next();
-	});
-
-	schema.post('save', function(level) {
-		console.log(level);
-		console.log(level.__proto__);
-		if(level.wasNew) {
-			User.findById(level.creator).select('username')
-				.exec(function(err, user) {
-					io.sockets.emit('level:add', {
-						_id: level.id,
-						title: level.title,
-						time: level.time,
-						grid: level.grid,
-						creator: user
-					});
-				})
-		} else {
-			io.sockets.emit('level:change', level);
-		} 
-	});
-	schema.post('remove', function(level) {
-		io.sockets.emit('level:remove', level._id);
-	});
-
-}
-
-
-module.exports = {
-	Level: Level,
-	bind: bind
-};
+module.exports = Level;
