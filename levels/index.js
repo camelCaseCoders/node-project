@@ -70,7 +70,7 @@ module.exports.api = function() {
 		if(!user) return next(error.notLoggedInError);
 
 		Level.find({creator: user})
-			.select('grid creator time title')
+			.select('grid time title rating')
 			.exec(function(err, levels) {
 				if(err) return next(err);
 
@@ -122,7 +122,7 @@ module.exports.api = function() {
 		var user = req.user;
 		if(!user) return next(error.notLoggedInError);
 
-		Level.remove({creator: user._id}, function(err, effect) {
+		Level.remove({creator: user._id, _id: req.body.id}, function(err, effect) {
 			if(err) return next(err);
 			
 			res.json(effect);

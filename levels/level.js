@@ -30,7 +30,8 @@ var rating = new Schema({
 var schema = new Schema({
 	title: {
 		type: String,
-		required: true
+		required: true,
+		trim: true
 	},
 	grid: {
 		type: [Number],
