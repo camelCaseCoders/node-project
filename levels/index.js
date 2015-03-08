@@ -61,12 +61,13 @@ module.exports.api = function() {
 			});
 	});
 	/*
+		LOGGED IN
 	*/
 	router.get('/my', function(req, res, next) {
-		var user = req.session.user;
+		var user = req.user;
 		if(!user) return next(error.notLoggedInError);
 
-		Level.findOne({creator: user})
+		Level.find({creator: user})
 			.select('grid creator time title')
 			.exec(function(err, levels) {
 				if(err) return next(err);
@@ -96,7 +97,7 @@ module.exports.api = function() {
 	*/
 	var submitError = new error.UserError('Incorrect level submited');
 	router.post('/submit', function(req, res, next) {
-		var user = req.session.user;
+		var user = req.user;
 		if(!user) return next(error.notLoggedInError);
 
 		Level.create({
@@ -116,7 +117,7 @@ module.exports.api = function() {
 			id (for level)
 	*/
 	router.delete('/byid', function(req, res, next) {
-		var user = req.session.user;
+		var user = req.user;
 		if(!user) return next(error.notLoggedInError);
 
 		Level.remove({creator: user._id}, function(err, effect) {
@@ -133,7 +134,7 @@ module.exports.api = function() {
 	*/
 	var rateError = new error.UserError('Invalid rate');
 	router.post('/rate', function(req, res, next) {
-		var user = req.session.user;
+		var user = req.user;
 		if(!user) return next(error.notLoggedInError);
 
 		var id = req.body.id, rating = req.body.rating;

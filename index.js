@@ -46,24 +46,21 @@ database.connect(function() {
 		next();
 	})
 
-	app.use(session());
+	// app.use(session());
 	app.use(user.authenticate());
 	app.use('/user', user.api());
 	app.use('/level', levels.api());
 	app.use('/scores', scores.api());
 	//User debug
 	app.use(function(req, res, next) {
-		// console.log(req.session.user ? 'Logged in as ' + req.session.user.username : 'Logged out');
+		// console.log(req.user ? 'Logged in as ' + req.user.username : 'Logged out');
 		// res.json(false);
 
 		next();
 	});
 	//Error logging
 	app.use(function(err, req, res, next) {
-		var status = (err instanceof error.UserError
-			|| err instanceof error.ValidationError) ? 200 : 500;
-		
-		res.status(status);
+		res.status(err.status || 500);
 		
 		console.log(err);
 		res.json(err);

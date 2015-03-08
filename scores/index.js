@@ -44,7 +44,7 @@ module.exports.api = function() {
 		score
 	*/
 	router.post('/add', function(req, res, next) {
-		var user = req.session.user;
+		var user = req.user;
 		if(!user) return error.notLoggedInError;
 
 		Score.create({
@@ -65,7 +65,7 @@ module.exports.api = function() {
 		id
 	*/
 	router.post('/remove', function(req, res, next) {
-		var user = req.session.user;
+		var user = req.user;
 		if(!user) return error.notLoggedInError;
 
 		Score.findById(req.body.id)

@@ -11,7 +11,9 @@ module.exports.authenticate = function() {
 		var username = req.cookies[COOKIE_USERNAME],
 				hash = req.cookies[COOKIE_HASH];
 
-		if(!req.session.user && username && hash) {
+		var start = Date.now();
+
+		if(username && hash) {
 			User.findOne({
 				username: username,
 				hash: hash
@@ -19,18 +21,18 @@ module.exports.authenticate = function() {
 			function(err, user) {
 				if(err) next(err);
 
-				if(user !== null) {
-					req.session.user = user;
+				if(user) {
+					req.user = user;
 				} else {
 					res.clearCookie(COOKIE_USERNAME);
 					res.clearCookie(COOKIE_HASH);
 				}
+				// console.log('fetching user took', Date.now() - start)
 				next();
 			})
-			//Prevent next from getting called before database request has finished
-			return;
+		} else {
+			next();
 		}
-		next();
 	}
 };
 
@@ -84,7 +86,7 @@ module.exports.api = function(io) {
 
 	//
 	router.get('/me', function(req, res, next) {
-		var user = req.session.user;
+		var user = req.user;
 		if(user) {
 			sendUser(user, res);
 		} else {
@@ -93,7 +95,7 @@ module.exports.api = function(io) {
 	});
 
 	router.get('/logout', function(req, res, next) {
-		delete req.session.user;
+		delete req.user;
 
 		res.clearCookie(COOKIE_USERNAME);
 		res.clearCookie(COOKIE_HASH);
@@ -106,7 +108,7 @@ module.exports.api = function(io) {
 			return res.json(false);
 		}
 
-		req.session.user = user;
+		req.user = user;
 
 		res.cookie(COOKIE_USERNAME, user.username);
 		res.cookie(COOKIE_HASH, user.hash);

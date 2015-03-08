@@ -14,12 +14,11 @@ module.exports = function(io) {
 		});
 
 
-		socket.on('tick', function(tick, x, y) {
+		socket.on('changedir', function(tick, x, y) {
 
-			// console.log('tick', tick, x, y);
+			console.log('changedir', tick, x, y);
 
-			socket.simulation.move(x, y);
-			socket.simulation.update(tick);
+			socket.simulation.update(tick, x, y);
 		});
 
 	});
@@ -35,16 +34,19 @@ function Simulation(level) {
 }
 
 Simulation.prototype = {
-	tick: 0,
-	update: function(tick) {
-		this.tick = tick;
+	lastTick: 0,
+	update: function(tick, x, y) {
+		if(tick < this.lastTick) console.log('WTF?');
 
+		this.tick = this.lastTick;
+		while(++this.tick < tick) {
+			this.level.update(this);
+		}
+
+		this.player.move(x, y);
 		this.level.update(this);
 
-		console.log(this.tick, this.player.pos)
-	},
-	move: function(x, y) {
-		this.player.move(x, y);
+		this.lastTick = tick;
 	}
 };
 
@@ -58,6 +60,7 @@ function SimulationLevel(level, width, height) {
 SimulationLevel.prototype = {
 	update: function(game) {
 		game.player.update(game, this);
+		console.log(game.tick, game.player.pos)
 	}
 };
 
