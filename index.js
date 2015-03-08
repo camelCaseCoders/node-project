@@ -1,21 +1,23 @@
 var express = require('express'),
 	app = express(),
 	server = require('http').createServer(app),
-	io = require('socket.io')(server),
+	// io = require('socket.io')(server),
 
 	bodyParser = require('body-parser'),
 	cookieParser = require('cookie-parser'),
 
 	database = require('./database.js'),
 
-	session = require('./session/'),
+	cors = require('./cors/'),
+
+	// session = require('./session/'),
 	user = require('./user/'),
 	levels = require('./levels/'),
 	scores = require('./scores/'),
 
-	error = require('./error.js'),
-
-	socket = require('./socket/');
+	error = require('./error.js')
+	// ,socket = require('./socket/')
+	;
 
 //Dont start until connected to mongodb
 database.connect(function() {
@@ -23,19 +25,10 @@ database.connect(function() {
 		console.log('Server up on port 8080.')
 	});
 
-	socket(io);
+	// socket(io);
 
 	//Enable CORS
-	app.use(function(req, res, next) {
-		res.header('Access-Control-Allow-Credentials', true);
-		res.header('Access-Control-Allow-Origin', req.headers.origin);
-		res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-		res.header('Access-Control-Allow-Headers', 'Content-Type,Accept,X-Requested-With');
-
-		if (req.method != 'OPTIONS') return next();
-
-   		res.status(204).end();
-   	});
+	app.use(cors());
 	// app.use(express.static(__dirname + '/static'));
 	app.use(express.static('static'));
 	app.use(bodyParser.json());

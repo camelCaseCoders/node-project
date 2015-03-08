@@ -1,3 +1,3 @@
-C:
-cd "C:\Program Files\MongoDB 2.6 Standard\bin"
-mongod --dbpath "D:\MongoDB"
+start start-node
+start start-db
+exit
