@@ -6,12 +6,12 @@ var userSchema = new Schema({
 	username: {
 		type: String,
 		required: true,
+		match: /^[^\s]+$/,
 		trim: true
 	},
 	hash: {
 		type: String,
-		required: true,
-		trim: true
+		required: true
 	}
 });
 

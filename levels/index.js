@@ -12,7 +12,7 @@ module.exports.api = function() {
 	*/
 	router.get('/all', function(req, res, next) {
 		Level.find()
-			.select('grid creator time title ratings popularity')
+			.select('grid creator time title ratings rating')
 			.populate('creator', 'username')
 			.populate('ratings.by', 'username')
 			.sort(req.query.sort)

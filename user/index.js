@@ -1,5 +1,6 @@
 var express = require('express'),
 	User = require('./user.js'),
+	error = require('../error.js'),
 
 	config = require('../config.json'),
 	COOKIE_USERNAME = config.usernameCookie,
@@ -61,7 +62,9 @@ module.exports.api = function(io) {
 			hash: req.body.hash
 		},
 		function(err, user) {
-			if(err) return next(err);
+			if(err) {
+				return next(err.name === 'ValidationError' ? new error.ValidationError('Invalid username') : err);
+			}
 
 			login(user, req, res);
 		});
