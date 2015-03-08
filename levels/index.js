@@ -7,13 +7,15 @@ module.exports.api = function() {
 	var router = express.Router();
 
 	/*
+		req.query:
+			sort
 	*/
 	router.get('/all', function(req, res, next) {
 		Level.find()
 			.select('grid creator time title ratings popularity')
 			.populate('creator', 'username')
 			.populate('ratings.by', 'username')
-			.sort('-popularity')
+			.sort(req.query.sort)
 			.exec(function(err, levels) {
 				if(err) next(err);
 

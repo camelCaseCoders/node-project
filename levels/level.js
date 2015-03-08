@@ -36,7 +36,7 @@ var schema = new Schema({
 		type: [Number],
 		validate: gridValidator
 	},
-	popularity: {
+	rating: {
 		type: Number,
 		required: false,
 		default: 0
@@ -89,14 +89,14 @@ schema.statics.rate = function(id, userId, rating, callback) {
 		Level.aggregate([
 			{$match: {_id: new ObjectId(id)}},
 			{$unwind: '$ratings'},
-			{$group: {_id: null, popularity: {$avg: '$ratings.rating'}}},
-			{$project: {_id: 0, popularity: 1}}
+			{$group: {_id: null, rating: {$avg: '$ratings.rating'}}},
+			{$project: {_id: 0, rating: 1}}
 		], function(err, result) {
 			if(err) return callback(err);
 
 			Level.update(
 				{_id: id},
-				{$set: {popularity: result[0].popularity}},
+				{$set: {rating: result[0].rating}},
 			function(err, result) {
 				if(err) return callback(err);
 

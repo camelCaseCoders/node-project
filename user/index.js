@@ -84,7 +84,6 @@ module.exports.api = function(io) {
 		});
 	});
 
-	//
 	router.get('/me', function(req, res, next) {
 		var user = req.user;
 		if(user) {
