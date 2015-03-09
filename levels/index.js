@@ -12,9 +12,10 @@ module.exports.api = function() {
 	*/
 	router.get('/all', function(req, res, next) {
 		Level.find()
-			.select('grid creator time title ratings rating')
+			// .populate('ratings.by', 'username')
+			// .select('grid creator time title ratings rating')
+			.select('grid creator time title rating')
 			.populate('creator', 'username')
-			.populate('ratings.by', 'username')
 			.sort(req.query.sort)
 			.exec(function(err, levels) {
 				if(err) next(err);

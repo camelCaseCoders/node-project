@@ -3,19 +3,21 @@ var express = require('express'),
 
 module.exports.api = function() {
 	var router = express.Router();
-	
+
 	/*
 	req.query:
 		level
 	*/
 	router.get('/all', function(req, res, next) {
 		Score.find({level: req.query.level})
-			.select('-__v')
+			.select('owner score')
+			.sort('-score')
+			.populate('owner', 'username')
 			.exec(function(err, scores) {
-			if(err) next(err);
+				if(err) next(err);
 
-			res.json(scores);
-		});
+				res.json(scores);
+			});
 	});
 
 	/*
@@ -30,7 +32,7 @@ module.exports.api = function() {
 			.sort(req.query.sort)
 			.skip(req.query.from)
 			.limit(req.query.length)
-			.populate('creator', 'username')
+			.populate('owner', 'username')
 			.exec(function(err, scores) {
 				if(err) next(err);
 
@@ -41,32 +43,37 @@ module.exports.api = function() {
 	/*
 	LOGGED IN
 	req.body:
+		level
 		score
 	*/
-	router.post('/add', function(req, res, next) {
+	router.post('/submit', function(req, res, next) {
 		var user = req.user;
-		if(!user) return error.notLoggedInError;
+		if(!user) return next(error.notLoggedInError);
 
-		Score.create({
-			level: level._id,
+		var level = {
 			score: req.body.score,
 			owner: user._id
-		},
-		function(err, score) {
+		};
+
+		if(req.body.level) {
+			level.level = req.body.level;
+		}
+
+		Score.create(level, function(err, score) {
 			if(err) next(err);
 
 			res.json(score);
 		});
 	});
-	
+
 	/*
 	LOGGED IN
 	req.body:
 		id
 	*/
-	router.post('/remove', function(req, res, next) {
+	router.delete('/byid', function(req, res, next) {
 		var user = req.user;
-		if(!user) return error.notLoggedInError;
+		if(!user) return next(error.notLoggedInError);
 
 		Score.findById(req.body.id)
 			.where('owner', user._id)

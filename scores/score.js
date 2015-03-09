@@ -6,12 +6,13 @@ var scoreSchema = new Schema({
 	level: {
 		type: Schema.Types.ObjectId,
 		ref: 'Level',
-		required: true,
 		select: false
 	},
 	score: {
 		type: Number,
-		required: true
+		required: true,
+		//Max is the theroretical maximum (width * height * scorePerBug)
+		min: 1, max: 75000
 	},
 	owner: {
 		type: Schema.Types.ObjectId,
@@ -29,6 +30,11 @@ var Level = mongoose.model('Level');
 var noLevelError = new error.UserError('Level does not exist'); 
 scoreSchema.pre('save', function(next) {
 	// this.model('Level').findById(this.level, function(err, level) {
+
+	if(!this.level) {
+		return next();
+	}
+
 	Level.findById(this.level, function(err, level) {
 		if(err) next(err);
 		
