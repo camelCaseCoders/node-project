@@ -62,6 +62,11 @@ var schema = new Schema({
 	}
 });
 
+//TODO ta bort en level ska ta bort deras scores
+schema.post('remove', function(level) {
+	this.model('Score').remove({level: level._id});	
+})
+
 schema.statics.rate = function(id, userId, rating, callback) {
 	//Validate rating
 	if(!ratingValidator[0](rating)) {
