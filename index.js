@@ -41,8 +41,9 @@ database.connect(function() {
 
 	// app.use(session());
 	
-	//Expose API
+	//Authenticate first
 	app.use(user.authenticate());
+	//Expose API
 	app.use('/user', user.api());
 	app.use('/level', levels.api());
 	app.use('/scores', scores.api());

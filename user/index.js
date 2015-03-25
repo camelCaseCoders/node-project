@@ -12,8 +12,6 @@ module.exports.authenticate = function() {
 		var username = req.cookies[COOKIE_USERNAME],
 				hash = req.cookies[COOKIE_HASH];
 
-		var start = Date.now();
-
 		if(username && hash) {
 			User.findOne({
 				username: username,
@@ -28,7 +26,6 @@ module.exports.authenticate = function() {
 					res.clearCookie(COOKIE_USERNAME);
 					res.clearCookie(COOKIE_HASH);
 				}
-				// console.log('fetching user took', Date.now() - start)
 				next();
 			})
 		} else {
@@ -63,7 +60,8 @@ module.exports.api = function(io) {
 		},
 		function(err, user) {
 			if(err) {
-				return next(err.name === 'ValidationError' ? new error.ValidationError('Invalid username') : err);
+				return next(err.name === 'ValidationError' ?
+					new error.ValidationError('Invalid username') : err);
 			}
 
 			login(user, req, res);
