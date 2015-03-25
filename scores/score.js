@@ -29,8 +29,6 @@ var Level = mongoose.model('Level');
 
 var noLevelError = new error.UserError('Level does not exist'); 
 scoreSchema.pre('save', function(next) {
-	// this.model('Level').findById(this.level, function(err, level) {
-
 	if(!this.level) {
 		return next();
 	}

@@ -29,28 +29,24 @@ database.connect(function() {
 
 	//Enable CORS
 	app.use(cors());
-	// app.use(express.static(__dirname + '/static'));
-	app.use(express.static('static'));
+	// app.use(express.static('static'));
 	app.use(bodyParser.json());
 	app.use(cookieParser());
 
+	//Log method and url
 	app.use(function(req, res, next) {
 		console.log(req.method, req.url)
 		next();
 	})
 
 	// app.use(session());
+	
+	//Expose API
 	app.use(user.authenticate());
 	app.use('/user', user.api());
 	app.use('/level', levels.api());
 	app.use('/scores', scores.api());
-	//User debug
-	app.use(function(req, res, next) {
-		// console.log(req.user ? 'Logged in as ' + req.user.username : 'Logged out');
-		// res.json(false);
 
-		next();
-	});
 	//Error logging
 	app.use(function(err, req, res, next) {
 		res.status(err.status || 500);

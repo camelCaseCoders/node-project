@@ -62,7 +62,7 @@ var schema = new Schema({
 	}
 });
 
-//TODO ta bort en level ska ta bort deras scores
+//Experimental
 schema.post('remove', function(level) {
 	this.model('Score').remove({level: level._id});	
 })
@@ -74,12 +74,14 @@ schema.statics.rate = function(id, userId, rating, callback) {
 	}
 
 	async.parallel([
+		//Attempt to update existing rating
 		function(callback) {
 			Level.update(
 				{_id: id, 'ratings.by': userId},
 				{$set: {'ratings.$.rating': rating}},
 				callback);
 		},
+		//Otherwise add new rating
 		function(callback) {
 			Level.update(
 				{_id: id, 'ratings.by': {$ne: userId}},
@@ -91,7 +93,8 @@ schema.statics.rate = function(id, userId, rating, callback) {
 			return callback(err);
 		}
 
-		// P(r, n) = r + 1 - 1/(n^k + 1)
+		//Calculate new rating (average)
+		// Suggested fututre function: P(r, n) = r + 1 - 1/(n^k + 1)
 		Level.aggregate([
 			{$match: {_id: new ObjectId(id)}},
 			{$unwind: '$ratings'},
@@ -100,6 +103,7 @@ schema.statics.rate = function(id, userId, rating, callback) {
 		], function(err, result) {
 			if(err) return callback(err);
 
+			//Set new rating
 			Level.update(
 				{_id: id},
 				{$set: {rating: result[0].rating}},

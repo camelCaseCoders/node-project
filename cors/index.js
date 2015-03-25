@@ -7,6 +7,7 @@ module.exports = function() {
 
 		if (req.method != 'OPTIONS') return next();
 
+		//Respond to preflight request https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS#Preflighted_requests
    		res.status(204).end();
    	};
 };

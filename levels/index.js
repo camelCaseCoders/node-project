@@ -144,6 +144,7 @@ module.exports.api = function() {
 
 		if(!id || !rating) return next(rateError);
 
+		//Call rate function defined in schema (level.js)
 		Level.rate(id, user._id, +rating, function(err) {
 			if(err) return next(err);
 

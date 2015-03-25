@@ -10,14 +10,3 @@ module.exports.connect = function(callback) {
 		console.log('Error connecting to MongoDB.');
 	});
 }
-
-// module.exports.ensureConnected = function() {
-// 	return function(req, res, next) {
-// 		if(connection.readyState === 1) {
-// 			next();
-// 		} else {
-// 			res.json(false);
-// 		}	
-// 	}
-// };
-
